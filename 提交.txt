@@ -12,19 +12,38 @@ AI食物热量分析系统是一个智能化的食物识别与营养分析平台
 
 ## 功能特性
 
-- **食物图像识别** - 通过上传图片或拍照识别食物种类
-- **文字描述分析** - 支持通过文字描述获取食物热量信息
-- **营养成分分析** - 提供详细的营养成分和热量数据
-- **健康建议推荐** - 基于食物特点提供个性化的健康饮食建议
-- **历史记录追踪** - 记录分析历史，便于长期饮食管理
-- **响应式设计** - 完美适配桌面、平板和手机设备
+- **首页 (Home)**: 应用主界面，提供食物分析入口
+- **分析结果 (AnalysisResult)**: 展示食物热量和营养分析结果
+- **对比 (Compare)**: 对比不同食物的营养信息
+- **历史记录 (History)**: 查看历史分析记录
+- **响应式设计**: 完美适配桌面、平板和手机设备
 
 ## 技术栈
 
 - **前端框架**: React 18
-- **路由**: React Router
-- **UI样式**: Tailwind CSS
-- **状态管理**: React Hooks
-- **数据存储**: LocalStorage
+- **路由**: React Router DOM
+- **UI组件库**: Ant Design
 - **构建工具**: Vite
-- **图标库**: Lucide React
+- **样式**: Tailwind CSS + 自定义样式
+- **图标**: Ant Design Icons
+
+## 项目结构
+
+```
+src/
+├── App.jsx
+├── index.jsx
+├── index.css
+└── pages/
+    ├── Home.jsx
+    ├── AnalysisResult.jsx
+    ├── Compare.jsx
+    └── History.jsx
+```
+
+## 路由
+
+- `/` - 首页
+- `/compare` - 对比页面
+- `/history` - 历史记录页面
+- `/analysis/:id` - 分析结果详情页面

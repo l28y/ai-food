@@ -1,6 +1,8 @@
 {
     "name": "AI-Food-Analyzer",
     "installCommand": "npm install",
+    "buildCommand": "npm run build",
+    "startCommand": "npm run preview",
     "assets": {
         "directory": "./dist",
         "notFoundStrategy": "singlePageApplication"

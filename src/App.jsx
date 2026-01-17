@@ -1,17 +1,19 @@
 import React from 'react';
 import { HashRouter, Routes, Route } from 'react-router-dom';
-import HomePage from './pages/HomePage';
-import HistoryPage from './pages/HistoryPage';
+import Home from './pages/Home';
+import Compare from './pages/Compare';
+import History from './pages/History';
+import AnalysisResult from './pages/AnalysisResult';
 
 const App = () => {
   return (
     <HashRouter>
-      <div className="min-h-screen bg-[#f0f7f4] text-[#333333] font-sans">
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/history" element={<HistoryPage />} />
-        </Routes>
-      </div>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/compare" element={<Compare />} />
+        <Route path="/history" element={<History />} />
+        <Route path="/analysis/:id" element={<AnalysisResult />} />
+      </Routes>
     </HashRouter>
   );
 };
