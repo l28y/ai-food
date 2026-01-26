@@ -1,6 +1,6 @@
 import React from 'react';
-import { HashRouter, Routes, Route, Navigate, App as AntdApp } from 'antd';
-import { ConfigProvider, theme } from 'antd';
+import { HashRouter, Routes, Route } from 'react-router-dom';
+import { ConfigProvider, theme, App as AntdApp } from 'antd';
 import Home from './pages/Home';
 import Compare from './pages/Compare';
 import History from './pages/History';
