@@ -1,79 +1,105 @@
-import React, { useState } from 'react';
-import { Button, Input, Card, Upload, message, Spin } from 'antd';
-import { UploadOutlined, CameraOutlined, HistoryOutlined } from '@ant-design/icons';
+import React, { useState, useEffect } from 'react';
+import { Button, Input, Card, Upload, message, Spin, Alert } from 'antd';
+import { UploadOutlined, CameraOutlined, HistoryOutlined, CloseOutlined, SettingOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { historyDB } from '../utils/historyDB';
 import { indexedDBHelper } from '../utils/indexedDB';
+import { analyzeFood } from '../api/siliconflow';
 
 const { TextArea } = Input;
 
 const Home = () => {
   const [description, setDescription] = useState('');
   const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
   const [analyzing, setAnalyzing] = useState(false);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    // 检查是否已配置API密钥
+    const apiKey = localStorage.getItem('siliconflow_api_key');
+    if (!apiKey) {
+      message.warning('请先配置API密钥');
+      navigate('/settings');
+    }
+  }, [navigate]);
 
   const handleAnalyze = async () => {
     if (!description && !imageFile) {
       message.warning('请上传图片或输入食物描述');
       return;
     }
+
+    const apiKey = localStorage.getItem('siliconflow_api_key');
+    const model = localStorage.getItem('siliconflow_model') || 'deepseek-ai/deepseek-vl2';
+
+    if (!apiKey) {
+      message.warning('请先配置API密钥');
+      navigate('/settings');
+      return;
+    }
     
     setAnalyzing(true);
     
-    // 模拟AI分析过程
-    setTimeout(async () => {
-      // 生成模拟分析结果
-      const imageId = Date.now();
+    try {
+      // 调用AI分析
+      const analysisResult = await analyzeFood(imageFile, description, apiKey, model);
+      
+      // 保存图片到IndexedDB
       let imageData = null;
-
-      // 如果有图片，先保存到IndexedDB
       if (imageFile) {
         try {
           await historyDB.init();
-          await indexedDB.saveImage(imageId, imageFile);
-          imageData = `db:${imageId}`;
+          await indexedDBHelper.saveImage(analysisResult.id, imageFile);
+          imageData = `db:${analysisResult.id}`;
         } catch (error) {
           console.error('保存图片失败:', error);
           message.error('保存图片失败，请重试');
-          setAnalyzing(false);
-          return;
         }
       }
 
-      const mockResult = {
-        id: imageId,
-        foodName: imageFile ? '牛肉拉面' : description,
-        quantity: '1碗',
-        calories: 480,
-        protein: 25,
-        fat: 12,
-        carbs: 68,
-        analysisTime: new Date().toLocaleString(),
-        imageId: imageData ? imageId : null,
-        recommendations: [
-          '建议搭配一份蔬菜沙拉增加纤维摄入',
-          '下次可选择清汤牛肉面减少油脂摄入',
-          '搭配一杯无糖豆浆增加蛋白质摄入'
-        ]
+      // 添加imageId到结果中
+      const resultWithImage = {
+        ...analysisResult,
+        imageId: imageData ? analysisResult.id : null
       };
       
       // 保存到IndexedDB
       try {
-        await historyDB.addHistory(mockResult);
+        await historyDB.addHistory(resultWithImage);
       } catch (error) {
         console.error('保存历史记录失败:', error);
         message.error('保存历史记录失败');
       }
+
+      // 清理预览URL
+      if (imagePreview) {
+        URL.revokeObjectURL(imagePreview);
+      }
       
       setAnalyzing(false);
-      navigate(`/analysis/${mockResult.id}`);
-    }, 2000);
+      navigate(`/analysis/${resultWithImage.id}`);
+    } catch (error) {
+      console.error('分析失败:', error);
+      message.error(error.message || '分析失败，请重试');
+      setAnalyzing(false);
+    }
   };
 
   const handleImageUpload = (file) => {
     setImageFile(file);
+    // 创建预览URL
+    const previewUrl = URL.createObjectURL(file);
+    setImagePreview(previewUrl);
     return false; // 阻止默认上传行为
+  };
+
+  const handleClearImage = () => {
+    setImageFile(null);
+    if (imagePreview) {
+      URL.revokeObjectURL(imagePreview);
+      setImagePreview(null);
+    }
   };
 
   return (
@@ -83,23 +109,55 @@ const Home = () => {
         <p className="text-center text-[#a0aec0] mb-6">拍照或描述食物，获取详细营养信息</p>
         
         <div className="mb-6">
-          <div className="flex justify-center mb-4">
-            <CameraOutlined className="text-4xl text-[#48bb78]" />
-          </div>
-          <Upload 
-            beforeUpload={handleImageUpload}
-            showUploadList={false}
-            accept="image/*"
-          >
-            <Button 
-              block 
-              size="large" 
-              icon={<UploadOutlined />}
-              className="mb-4"
-            >
-              {imageFile ? '已选择图片' : '上传食物图片'}
-            </Button>
-          </Upload>
+          {imagePreview ? (
+            <div className="mb-6 flex flex-col items-center">
+              <div className="relative mb-4">
+                <img
+                  src={imagePreview}
+                  alt="上传的图片"
+                  className="w-full max-w-xs h-64 object-contain rounded-xl border-2 border-[#48bb78] shadow-md"
+                />
+                <Button
+                  type="text"
+                  icon={<CloseOutlined />}
+                  className="absolute -top-2 -right-2 bg-white rounded-full shadow-md w-8 h-8 flex items-center justify-center hover:bg-[#f7fafc]"
+                  onClick={handleClearImage}
+                />
+              </div>
+              <Upload
+                beforeUpload={handleImageUpload}
+                showUploadList={false}
+                accept="image/*"
+              >
+                <Button
+                  size="large"
+                  icon={<UploadOutlined />}
+                  className="w-64"
+                >
+                  更换图片
+                </Button>
+              </Upload>
+            </div>
+          ) : (
+            <div className="mb-6 flex flex-col items-center">
+              <div className="w-32 h-32 rounded-full bg-gradient-to-br from-[#c6f6d5] to-[#9ae6b4] flex items-center justify-center mb-4">
+                <CameraOutlined className="text-5xl text-[#48bb78]" />
+              </div>
+              <Upload 
+                beforeUpload={handleImageUpload}
+                showUploadList={false}
+                accept="image/*"
+              >
+                <Button
+                  size="large"
+                  icon={<UploadOutlined />}
+                  className="bg-gradient-to-r from-[#48bb78] to-[#38a169] text-white border-none hover:from-[#3da067] hover:to-[#2f855a] w-64"
+                >
+                  上传食物图片
+                </Button>
+              </Upload>
+            </div>
+          )}
           
           <div className="relative flex items-center justify-center mb-4">
             <div className="flex-grow border-t border-[#cbd5e0]" />
@@ -114,6 +172,18 @@ const Home = () => {
             onChange={(e) => setDescription(e.target.value)}
             className="mb-4"
           />
+
+          {!localStorage.getItem('siliconflow_api_key') && (
+            <Alert
+              message="请先配置API密钥"
+              description="需要配置硅基流动API密钥才能使用AI分析功能"
+              type="warning"
+              showIcon
+              closable
+              className="mb-4"
+              afterClose={() => {}}
+            />
+          )}
         </div>
         
         <Button 
@@ -132,8 +202,19 @@ const Home = () => {
           size="large" 
           icon={<HistoryOutlined />}
           onClick={() => navigate('/history')}
+          className="mb-4"
         >
           查看历史记录
+        </Button>
+
+        <Button 
+          block 
+          size="large" 
+          icon={<SettingOutlined />}
+          onClick={() => navigate('/settings')}
+          className="text-[#718096]"
+        >
+          API设置
         </Button>
       </div>
       

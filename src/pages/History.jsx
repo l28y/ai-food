@@ -51,34 +51,49 @@ const History = () => {
         </div>
         
         {history.length === 0 ? (
-          <Empty 
-            description="暂无分析记录" 
+          <Empty
+            description="暂无分析记录"
             className="py-12"
-            imageStyle={{ height: 80 }}
+            styles={{
+              image: { height: 80 }
+            }}
           />
         ) : (
           <List
             dataSource={history}
             renderItem={item => (
-              <List.Item 
+              <List.Item
                 className="bg-white border border-[#e2e8f0] rounded-lg mb-3 cursor-pointer hover:shadow-md transition-shadow"
                 onClick={() => navigate(`/analysis/${item.id}`)}
               >
                 <Card className="w-full border-0 shadow-none relative">
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <h3 className="font-bold text-[#2d3748]">{item.foodName}</h3>
-                      <p className="text-sm text-[#a0aec0]">{item.analysisTime}</p>
+                  <div className="flex justify-between items-start">
+                    <div className="flex items-start">
+                      {item.image ? (
+                        <img
+                          src={item.image}
+                          alt={item.foodName}
+                          className="w-20 h-20 object-cover rounded-lg mr-4"
+                        />
+                      ) : (
+                        <div className="w-20 h-20 rounded-lg bg-[#c6f6d5] flex items-center justify-center mr-4">
+                          <span className="text-3xl">🍜</span>
+                        </div>
+                      )}
+                      <div>
+                        <h3 className="font-bold text-[#2d3748]">{item.foodName}</h3>
+                        <p className="text-sm text-[#a0aec0]">{item.analysisTime}</p>
+                      </div>
                     </div>
                     <div className="text-right">
                       <p className="text-lg font-bold text-[#48bb78]">{item.calories} <span className="text-sm font-normal">kcal</span></p>
                       <p className="text-sm text-[#a0aec0]">{item.quantity}</p>
                     </div>
                   </div>
-                  
-                  <Button 
-                    type="text" 
-                    icon={<DeleteOutlined />} 
+
+                  <Button
+                    type="text"
+                    icon={<DeleteOutlined />}
                     className="absolute top-2 right-2 text-[#a0aec0] hover:text-[#f6ad55]"
                     onClick={(e) => {
                       e.stopPropagation();

@@ -1,21 +1,49 @@
 import React, { useState, useEffect } from 'react';
-import { Button, Card, List, message } from 'antd';
+import { Button, Card, List, message, Empty } from 'antd';
 import { LeftOutlined, RightOutlined, SwapOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
+import { historyDB } from '../utils/historyDB';
 
 const Compare = () => {
   const [history, setHistory] = useState([]);
   const [selectedFoods, setSelectedFoods] = useState([null, null]);
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
-    const storedHistory = JSON.parse(localStorage.getItem('calorieHistory') || '[]');
-    setHistory(storedHistory);
+    loadHistory();
   }, []);
+
+  const loadHistory = async () => {
+    setLoading(true);
+    try {
+      await historyDB.init();
+      const historyData = await historyDB.getAllHistory();
+      setHistory(historyData);
+    } catch (error) {
+      console.error('加载历史记录失败:', error);
+      // 回退到localStorage
+      const storedHistory = JSON.parse(localStorage.getItem('calorieHistory') || '[]');
+      setHistory(storedHistory);
+    }
+    setLoading(false);
+  };
 
   const selectFood = (food, index) => {
     const newSelected = [...selectedFoods];
     newSelected[index] = food;
+    setSelectedFoods(newSelected);
+  };
+
+  const swapFoods = () => {
+    if (selectedFoods[0] && selectedFoods[1]) {
+      setSelectedFoods([selectedFoods[1], selectedFoods[0]]);
+    }
+  };
+
+  const clearSelection = (index) => {
+    const newSelected = [...selectedFoods];
+    newSelected[index] = null;
     setSelectedFoods(newSelected);
   };
 
@@ -24,13 +52,27 @@ const Compare = () => {
       message.warning('请选择两种食物进行对比');
       return;
     }
-    
-    // 在实际应用中，这里会跳转到对比结果页面
-    message.success(`即将对比: ${selectedFoods[0].foodName} vs ${selectedFoods[1].foodName}`);
-    // 模拟跳转到对比结果页面
-    setTimeout(() => {
-      navigate('/');
-    }, 1000);
+
+    // 计算差异
+    const calorieDiff = selectedFoods[0].calories - selectedFoods[1].calories;
+    const proteinDiff = selectedFoods[0].protein - selectedFoods[1].protein;
+    const fatDiff = selectedFoods[0].fat - selectedFoods[1].fat;
+    const carbsDiff = selectedFoods[0].carbs - selectedFoods[1].carbs;
+
+    // 显示对比结果
+    const comparisonResult = {
+      calories: Math.abs(calorieDiff),
+      calorieComparison: calorieDiff > 0 ? `${selectedFoods[1].foodName} 更低` : `${selectedFoods[0].foodName} 更低`,
+      protein: Math.abs(proteinDiff),
+      proteinComparison: proteinDiff > 0 ? `${selectedFoods[0].foodName} 更高` : `${selectedFoods[1].foodName} 更高`,
+      fat: Math.abs(fatDiff),
+      fatComparison: fatDiff > 0 ? `${selectedFoods[0].foodName} 更高` : `${selectedFoods[1].foodName} 更高`,
+      carbs: Math.abs(carbsDiff),
+      carbsComparison: carbsDiff > 0 ? `${selectedFoods[0].foodName} 更高` : `${selectedFoods[1].foodName} 更高`
+    };
+
+    // 显示对比信息
+    message.success(`对比结果：${comparisonResult.calorieComparison}`);
   };
 
   return (
@@ -52,24 +94,63 @@ const Compare = () => {
             <h3 className="font-medium text-[#2d3748] mb-2">食物A</h3>
             {selectedFoods[0] ? (
               <>
+                {selectedFoods[0].image && (
+                  <img
+                    src={selectedFoods[0].image}
+                    alt={selectedFoods[0].foodName}
+                    className="w-20 h-20 object-cover rounded-lg mx-auto mb-2"
+                  />
+                )}
                 <p className="text-lg font-bold text-[#48bb78]">{selectedFoods[0].foodName}</p>
                 <p className="text-sm text-[#a0aec0]">{selectedFoods[0].quantity} | {selectedFoods[0].calories}kcal</p>
+                <Button
+                  type="text"
+                  size="small"
+                  className="text-red-400 hover:text-red-500 mt-2"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    clearSelection(0);
+                  }}
+                >
+                  清除
+                </Button>
               </>
             ) : (
               <p className="text-[#a0aec0]">待选择</p>
             )}
           </div>
-          
-          <div className="mx-2 text-[#48bb78]">
-            <SwapOutlined className="text-2xl" />
-          </div>
-          
+
+          <Button
+            type="text"
+            icon={<SwapOutlined />}
+            className="mx-2 text-[#48bb78] hover:bg-[#f0fff4]"
+            onClick={swapFoods}
+          />
+
           <div className="text-center flex-1 px-4 py-6 bg-[#f0fff4] rounded-lg ml-2">
             <h3 className="font-medium text-[#2d3748] mb-2">食物B</h3>
             {selectedFoods[1] ? (
               <>
+                {selectedFoods[1].image && (
+                  <img
+                    src={selectedFoods[1].image}
+                    alt={selectedFoods[1].foodName}
+                    className="w-20 h-20 object-cover rounded-lg mx-auto mb-2"
+                  />
+                )}
                 <p className="text-lg font-bold text-[#48bb78]">{selectedFoods[1].foodName}</p>
                 <p className="text-sm text-[#a0aec0]">{selectedFoods[1].quantity} | {selectedFoods[1].calories}kcal</p>
+                <Button
+                  type="text"
+                  size="small"
+                  className="text-red-400 hover:text-red-500 mt-2"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    clearSelection(1);
+                  }}
+                >
+                  清除
+                </Button>
               </>
             ) : (
               <p className="text-[#a0aec0]">待选择</p>
@@ -89,35 +170,63 @@ const Compare = () => {
         </Button>
         
         <h2 className="text-lg font-bold text-[#2d3748] mb-4">选择对比食物</h2>
-        <List
-          dataSource={history}
-          renderItem={item => (
-            <List.Item 
-              className="bg-white border border-[#e2e8f0] rounded-lg mb-3 cursor-pointer hover:shadow-md transition-shadow"
-              onClick={() => {
-                // 简化逻辑：依次选择食物A和食物B
-                if (!selectedFoods[0]) {
-                  selectFood(item, 0);
-                } else if (!selectedFoods[1]) {
-                  selectFood(item, 1);
-                }
-              }}
-            >
-              <Card className="w-full border-0 shadow-none">
-                <div className="flex justify-between items-center">
-                  <div>
-                    <h3 className="font-bold text-[#2d3748]">{item.foodName}</h3>
-                    <p className="text-sm text-[#a0aec0]">{item.quantity} | {item.calories}kcal</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm text-[#48bb78] font-medium">蛋白质: {item.protein}g</p>
-                    <p className="text-sm text-[#f6ad55] font-medium">脂肪: {item.fat}g</p>
-                  </div>
-                </div>
-              </Card>
-            </List.Item>
-          )}
-        />
+        {history.length === 0 ? (
+          <Empty
+            description="暂无历史记录，请先分析食物"
+            className="py-12"
+            styles={{
+              image: { height: 80 }
+            }}
+          />
+        ) : (
+          <List
+            loading={loading}
+            dataSource={history}
+            renderItem={item => {
+              const isSelected = selectedFoods.some(f => f && f.id === item.id);
+              return (
+                <List.Item
+                  className={`bg-white border rounded-lg mb-3 cursor-pointer hover:shadow-md transition-shadow ${
+                    isSelected ? 'border-[#48bb78] bg-[#f0fff4]' : 'border-[#e2e8f0]'
+                  }`}
+                  onClick={() => {
+                    // 简化逻辑：依次选择食物A和食物B
+                    if (!selectedFoods[0]) {
+                      selectFood(item, 0);
+                    } else if (!selectedFoods[1]) {
+                      selectFood(item, 1);
+                    } else {
+                      // 如果两个都已选择，覆盖第一个
+                      selectFood(item, 0);
+                    }
+                  }}
+                >
+                  <Card className="w-full border-0 shadow-none">
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center">
+                        {item.image && (
+                          <img
+                            src={item.image}
+                            alt={item.foodName}
+                            className="w-16 h-16 object-cover rounded-lg mr-4"
+                          />
+                        )}
+                        <div>
+                          <h3 className="font-bold text-[#2d3748]">{item.foodName}</h3>
+                          <p className="text-sm text-[#a0aec0]">{item.quantity} | {item.calories}kcal</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm text-[#48bb78] font-medium">蛋白质: {item.protein}g</p>
+                        <p className="text-sm text-[#f6ad55] font-medium">脂肪: {item.fat}g</p>
+                      </div>
+                    </div>
+                  </Card>
+                </List.Item>
+              );
+            }}
+          />
+        )}
       </div>
     </div>
   );

@@ -20,8 +20,13 @@ class IndexedDBHelper {
 
       request.onupgradeneeded = (event) => {
         const db = event.target.result;
+        // 创建images存储
         if (!db.objectStoreNames.contains(this.storeName)) {
           db.createObjectStore(this.storeName, { keyPath: 'id' });
+        }
+        // 创建history存储
+        if (!db.objectStoreNames.contains('history')) {
+          db.createObjectStore('history', { keyPath: 'id' });
         }
       };
     });

@@ -23,7 +23,11 @@ class HistoryDB {
 
       request.onupgradeneeded = (event) => {
         const db = event.target.result;
-        // 确保历史记录存储存在
+        // 创建images存储
+        if (!db.objectStoreNames.contains('images')) {
+          db.createObjectStore('images', { keyPath: 'id' });
+        }
+        // 创建history存储
         if (!db.objectStoreNames.contains(HISTORY_STORE_NAME)) {
           db.createObjectStore(HISTORY_STORE_NAME, { keyPath: 'id' });
         }
@@ -54,10 +58,28 @@ class HistoryDB {
       const store = transaction.objectStore(HISTORY_STORE_NAME);
       const request = store.getAll();
 
-      request.onsuccess = () => {
+      request.onsuccess = async () => {
         // 按时间倒序排序
         const results = request.result.sort((a, b) => b.id - a.id);
-        resolve(results);
+
+        // 为每条记录加载图片数据
+        const resultsWithImages = await Promise.all(
+          results.map(async (item) => {
+            if (item.imageId) {
+              try {
+                const imageData = await indexedDBHelper.getImage(item.imageId);
+                if (imageData) {
+                  item.image = imageData;
+                }
+              } catch (error) {
+                console.error('加载图片失败:', error);
+              }
+            }
+            return item;
+          })
+        );
+
+        resolve(resultsWithImages);
       };
       request.onerror = () => reject(request.error);
     });
@@ -102,7 +124,7 @@ class HistoryDB {
 
       getRequest.onsuccess = async () => {
         const record = getRequest.result;
-        
+
         // 删除图片
         if (record && record.imageId) {
           await indexedDBHelper.deleteImage(record.imageId);
