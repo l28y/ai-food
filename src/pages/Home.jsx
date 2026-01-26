@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Button, Input, Card, Upload, message, Spin, Alert } from 'antd';
+import { Button, Input, Card, Upload, Spin, Alert, App } from 'antd';
 import { UploadOutlined, CameraOutlined, HistoryOutlined, CloseOutlined, SettingOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { historyDB } from '../utils/historyDB';
@@ -7,6 +7,7 @@ import { indexedDBHelper } from '../utils/indexedDB';
 import { analyzeFood } from '../api/siliconflow';
 
 const { TextArea } = Input;
+const { message } = App.useApp();
 
 const Home = () => {
   const [description, setDescription] = useState('');

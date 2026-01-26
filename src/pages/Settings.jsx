@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Button, Card, Input, message, Form, Select, Space, Divider, Alert } from 'antd';
+import { Button, Card, Input, Form, Select, Space, Divider, Alert, App } from 'antd';
 import { SaveOutlined, LeftOutlined, KeyOutlined, RobotOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
+
+const { message } = App.useApp();
 
 const { Option } = Select;
 
@@ -35,6 +37,9 @@ const Settings = () => {
     }
   ];
 
+  // 测试密钥
+  const TEST_API_KEY = 'sk-yhqrucalfounzlswjkpitezdmgvgeksmllzrtsgljwnicnup';
+
   useEffect(() => {
     // 加载已保存的设置
     loadSettings();
@@ -44,6 +49,11 @@ const Settings = () => {
     const apiKey = localStorage.getItem('siliconflow_api_key') || '';
     const model = localStorage.getItem('siliconflow_model') || 'deepseek-ai/deepseek-vl2';
     form.setFieldsValue({ apiKey, model });
+  };
+
+  const handleUseTestKey = () => {
+    form.setFieldsValue({ apiKey: TEST_API_KEY });
+    message.success('已填入测试密钥，请按需使用');
   };
 
   const handleSave = async () => {
@@ -126,7 +136,18 @@ const Settings = () => {
 
         <Alert
           message="关于API密钥"
-          description="API密钥用于调用硅基流动的大模型服务。请访问硅基流动官网获取您的API密钥。密钥将仅保存在本地浏览器中，不会上传到任何服务器。"
+          description={
+            <div>
+              <p className="mb-2">API密钥用于调用硅基流动的大模型服务。请访问硅基流动官网获取您的API密钥。密钥将仅保存在本地浏览器中，不会上传到任何服务器。</p>
+              <Alert
+                message="测试密钥"
+                description="下方提供的是测试密钥，仅供开发测试使用。正式使用时请申请自己的API密钥。"
+                type="warning"
+                showIcon
+                className="mt-2"
+              />
+            </div>
+          }
           type="info"
           showIcon
           icon={<InfoCircleOutlined />}
@@ -203,6 +224,14 @@ const Settings = () => {
               测试连接
             </Button>
           </div>
+
+          <Button
+            size="large"
+            onClick={handleUseTestKey}
+            className="text-[#48bb78] border-[#48bb78] hover:text-[#3da067] hover:border-[#3da067]"
+          >
+            使用测试密钥
+          </Button>
 
           <Button
             size="large"

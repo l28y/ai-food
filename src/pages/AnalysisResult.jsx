@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Button, Card, Progress, message } from 'antd';
+import { Button, Card, Progress, App } from 'antd';
 import { LeftOutlined, SwapOutlined, BulbOutlined } from '@ant-design/icons';
 import { useNavigate, useParams } from 'react-router-dom';
 import { historyDB } from '../utils/historyDB';
+
+const { message } = App.useApp();
 
 const AnalysisResult = () => {
   const [analysisResult, setAnalysisResult] = useState(null);

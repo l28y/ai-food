@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Button, List, Card, Empty, message } from 'antd';
+import { Button, List, Card, Empty, App } from 'antd';
 import { LeftOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { historyDB } from '../utils/historyDB';
+
+const { message } = App.useApp();
 
 const History = () => {
   const [history, setHistory] = useState([]);
