@@ -3,11 +3,10 @@ import { Button, Card, Input, Form, Select, Space, Divider, Alert, App } from 'a
 import { SaveOutlined, LeftOutlined, KeyOutlined, RobotOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 
-const { message } = App.useApp();
-
 const { Option } = Select;
 
 const Settings = () => {
+  const { message } = App.useApp();
   const [form] = Form.useForm();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);

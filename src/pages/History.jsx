@@ -4,9 +4,8 @@ import { LeftOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { historyDB } from '../utils/historyDB';
 
-const { message } = App.useApp();
-
 const History = () => {
+  const { message } = App.useApp();
   const [history, setHistory] = useState([]);
   const navigate = useNavigate();
 

@@ -4,9 +4,8 @@ import { LeftOutlined, RightOutlined, SwapOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { historyDB } from '../utils/historyDB';
 
-const { message } = App.useApp();
-
 const Compare = () => {
+  const { message } = App.useApp();
   const [history, setHistory] = useState([]);
   const [selectedFoods, setSelectedFoods] = useState([null, null]);
   const [loading, setLoading] = useState(false);

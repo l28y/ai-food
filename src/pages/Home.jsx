@@ -7,9 +7,9 @@ import { indexedDBHelper } from '../utils/indexedDB';
 import { analyzeFood } from '../api/siliconflow';
 
 const { TextArea } = Input;
-const { message } = App.useApp();
 
 const Home = () => {
+  const { message } = App.useApp();
   const [description, setDescription] = useState('');
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
