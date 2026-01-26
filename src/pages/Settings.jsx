@@ -18,22 +18,23 @@ const Settings = () => {
       value: 'deepseek-ai/deepseek-vl2',
       label: 'DeepSeek-VL2 (视觉语言模型)',
       description: '支持图片和文本输入的多模态模型'
-    },
-    {
-      value: 'Qwen/Qwen2.5-7B-Instruct',
-      label: 'Qwen2.5-7B-Instruct',
-      description: '通义千问7B指令模型'
-    },
-    {
-      value: 'THUDM/glm-4-9b-chat',
-      label: 'GLM-4-9B-Chat',
-      description: '智谱AI GLM-4模型'
-    },
-    {
-      value: 'Pro/deepseek-ai/DeepSeek-V3',
-      label: 'DeepSeek-V3',
-      description: 'DeepSeek最新版本模型'
     }
+
+    // {
+    //   value: 'Qwen/Qwen2.5-7B-Instruct',
+    //   label: 'Qwen2.5-7B-Instruct',
+    //   description: '通义千问7B指令模型'
+    // },
+    // {
+    //   value: 'THUDM/glm-4-9b-chat',
+    //   label: 'GLM-4-9B-Chat',
+    //   description: '智谱AI GLM-4模型'
+    // },
+    // {
+    //   value: 'Pro/deepseek-ai/DeepSeek-V3',
+    //   label: 'DeepSeek-V3',
+    //   description: 'DeepSeek最新版本模型'
+    // }
   ];
 
   // 测试密钥
