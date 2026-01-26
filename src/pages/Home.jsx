@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Button, Input, Card, Upload, message, Spin } from 'antd';
 import { UploadOutlined, CameraOutlined, HistoryOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
+import { historyDB } from '../utils/historyDB';
+import { indexedDBHelper } from '../utils/indexedDB';
 
 const { TextArea } = Input;
 
@@ -20,10 +22,27 @@ const Home = () => {
     setAnalyzing(true);
     
     // 模拟AI分析过程
-    setTimeout(() => {
+    setTimeout(async () => {
       // 生成模拟分析结果
+      const imageId = Date.now();
+      let imageData = null;
+
+      // 如果有图片，先保存到IndexedDB
+      if (imageFile) {
+        try {
+          await historyDB.init();
+          await indexedDB.saveImage(imageId, imageFile);
+          imageData = `db:${imageId}`;
+        } catch (error) {
+          console.error('保存图片失败:', error);
+          message.error('保存图片失败，请重试');
+          setAnalyzing(false);
+          return;
+        }
+      }
+
       const mockResult = {
-        id: Date.now(),
+        id: imageId,
         foodName: imageFile ? '牛肉拉面' : description,
         quantity: '1碗',
         calories: 480,
@@ -31,13 +50,21 @@ const Home = () => {
         fat: 12,
         carbs: 68,
         analysisTime: new Date().toLocaleString(),
-        image: imageFile ? URL.createObjectURL(imageFile) : null
+        imageId: imageData ? imageId : null,
+        recommendations: [
+          '建议搭配一份蔬菜沙拉增加纤维摄入',
+          '下次可选择清汤牛肉面减少油脂摄入',
+          '搭配一杯无糖豆浆增加蛋白质摄入'
+        ]
       };
       
-      // 保存到localStorage
-      const history = JSON.parse(localStorage.getItem('calorieHistory') || '[]');
-      history.unshift(mockResult);
-      localStorage.setItem('calorieHistory', JSON.stringify(history));
+      // 保存到IndexedDB
+      try {
+        await historyDB.addHistory(mockResult);
+      } catch (error) {
+        console.error('保存历史记录失败:', error);
+        message.error('保存历史记录失败');
+      }
       
       setAnalyzing(false);
       navigate(`/analysis/${mockResult.id}`);

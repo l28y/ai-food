@@ -2,21 +2,38 @@ import React, { useState, useEffect } from 'react';
 import { Button, List, Card, Empty, message } from 'antd';
 import { LeftOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
+import { historyDB } from '../utils/historyDB';
 
 const History = () => {
   const [history, setHistory] = useState([]);
   const navigate = useNavigate();
 
   useEffect(() => {
-    const storedHistory = JSON.parse(localStorage.getItem('calorieHistory') || '[]');
-    setHistory(storedHistory);
+    loadHistory();
   }, []);
 
-  const deleteRecord = (id) => {
-    const newHistory = history.filter(item => item.id !== id);
-    setHistory(newHistory);
-    localStorage.setItem('calorieHistory', JSON.stringify(newHistory));
-    message.success('记录已删除');
+  const loadHistory = async () => {
+    try {
+      await historyDB.init();
+      const historyData = await historyDB.getAllHistory();
+      setHistory(historyData);
+    } catch (error) {
+      console.error('加载历史记录失败:', error);
+      // 回退到localStorage
+      const storedHistory = JSON.parse(localStorage.getItem('calorieHistory') || '[]');
+      setHistory(storedHistory);
+    }
+  };
+
+  const deleteRecord = async (id) => {
+    try {
+      await historyDB.deleteHistory(id);
+      await loadHistory();
+      message.success('记录已删除');
+    } catch (error) {
+      console.error('删除记录失败:', error);
+      message.error('删除记录失败');
+    }
   };
 
   return (

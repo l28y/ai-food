@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Button, Card, Progress, message } from 'antd';
 import { LeftOutlined, SwapOutlined, BulbOutlined } from '@ant-design/icons';
 import { useNavigate, useParams } from 'react-router-dom';
+import { historyDB } from '../utils/historyDB';
 
 const AnalysisResult = () => {
   const [analysisResult, setAnalysisResult] = useState(null);
@@ -10,23 +11,46 @@ const AnalysisResult = () => {
   const { id } = useParams();
 
   useEffect(() => {
-    const history = JSON.parse(localStorage.getItem('calorieHistory') || '[]');
-    const result = history.find(item => item.id == id);
-    if (result) {
-      setAnalysisResult(result);
-      
-      // 生成模拟推荐
-      const mockRecommendations = [
-        '建议搭配一份蔬菜沙拉增加纤维摄入',
-        '下次可选择清汤牛肉面减少油脂摄入',
-        '搭配一杯无糖豆浆增加蛋白质摄入'
-      ];
-      setRecommendations(mockRecommendations);
-    } else {
-      message.error('未找到分析记录');
+    loadAnalysisResult();
+  }, [id, navigate]);
+
+  const loadAnalysisResult = async () => {
+    try {
+      await historyDB.init();
+      const result = await historyDB.getHistory(id);
+      if (result) {
+        setAnalysisResult(result);
+        
+        // 使用存储在结果中的推荐，如果没有则生成模拟推荐
+        const recs = result.recommendations || [
+          '建议搭配一份蔬菜沙拉增加纤维摄入',
+          '下次可选择清汤牛肉面减少油脂摄入',
+          '搭配一杯无糖豆浆增加蛋白质摄入'
+        ];
+        setRecommendations(recs);
+      } else {
+        // 回退到localStorage
+        const history = JSON.parse(localStorage.getItem('calorieHistory') || '[]');
+        const localStorageResult = history.find(item => item.id == id);
+        if (localStorageResult) {
+          setAnalysisResult(localStorageResult);
+          const recs = localStorageResult.recommendations || [
+            '建议搭配一份蔬菜沙拉增加纤维摄入',
+            '下次可选择清汤牛肉面减少油脂摄入',
+            '搭配一杯无糖豆浆增加蛋白质摄入'
+          ];
+          setRecommendations(recs);
+        } else {
+          message.error('未找到分析记录');
+          navigate('/');
+        }
+      }
+    } catch (error) {
+      console.error('加载分析结果失败:', error);
+      message.error('加载分析结果失败');
       navigate('/');
     }
-  }, [id, navigate]);
+  };
 
   if (!analysisResult) return null;
 
@@ -122,14 +146,35 @@ const AnalysisResult = () => {
             type="dashed" 
             block 
             className="mt-4 text-[#48bb78] border-[#48bb78] hover:border-[#3da067] hover:text-[#3da067]"
-            onClick={() => {
+            onClick={async () => {
               const newRec = [
                 '建议增加一份水果补充维生素',
                 '可搭配无糖酸奶增加益生菌摄入',
                 '下次选择全麦面包增加膳食纤维'
               ][Math.floor(Math.random() * 3)];
               
-              setRecommendations([newRec]);
+              const updatedRecommendations = [newRec];
+              setRecommendations(updatedRecommendations);
+              
+              // 更新存储中的推荐数据
+              if (analysisResult) {
+                const updatedResult = {
+                  ...analysisResult,
+                  recommendations: updatedRecommendations
+                };
+                setAnalysisResult(updatedResult);
+                
+                try {
+                  await historyDB.init();
+                  // 更新IndexedDB中的记录
+                  const db = historyDB.db;
+                  const transaction = db.transaction(['history'], 'readwrite');
+                  const store = transaction.objectStore('history');
+                  store.put(updatedResult);
+                } catch (error) {
+                  console.error('更新推荐失败:', error);
+                }
+              }
             }}
           >
             换一批建议
